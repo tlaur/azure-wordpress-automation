@@ -1,0 +1,72 @@
+---
+- name: Configure webserver for LEMP
+  hosts: webservers
+  become: yes
+  vars:
+    php_packages:
+    - php-fpm
+    - php-cli 
+    - php-mysql 
+    - php-json 
+    - php-curl 
+    - php-gd 
+    - php-intl 
+    - php-mbstring 
+    - php-soap 
+    - php-xml 
+    - php-xmlrpc 
+    - php-zip 
+    - php-opcache
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 86400
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Install PHP and required packages for Wordpress
+      ansible.builtin.apt:
+        name: '{{ item }}'
+        state: present
+      with_items: '{{ php_packages }}'
+
+    - name: Install MySQL client
+      ansible.builtin.apt:
+        name: mysql-client
+        state: present
+
+    - name: Install snapd
+      ansible.builtin.apt:
+        name: snapd
+        state: present
+
+    - name: Install core snap
+      community.general.snap:
+        name: core
+        state: present
+
+    - name: Install certbot snap
+      community.general.snap:
+        name: certbot
+        classic: yes
+        state: present
+
+    - name: Create certbot symlink
+      ansible.builtin.file:
+        src: /snap/bin/certbot
+        dest: /usr/bin/certbot
+        state: link
+
+    - name: Install Python3 pip
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+
+    - name: Install PyMySQL Python3 module
+      ansible.builtin.pip:
+        name: PyMySQL

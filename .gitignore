@@ -1,0 +1,15 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Terraform plan files
+*tfplan*
+
+# Terraform variables file containing secrets and credentials
+*.tfvars
+
+# Local configuration files and variables
+.config/*

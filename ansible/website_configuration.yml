@@ -1,0 +1,74 @@
+---
+- name: "Configure wordpress site and database for {{ site_url }}"
+  hosts: webservers
+  become: yes
+
+  tasks:
+  - name: Create website database
+    community.mysql.mysql_db:
+      name: "{{ site_db_name }}"
+      login_host: "{{ db_server_host }}"
+      login_user: "{{ db_server_admin_username }}"
+      login_password: "{{ db_server_admin_password }}"
+      check_hostname: yes
+      state: present
+
+  - name: Create website database user with all privileges
+    community.mysql.mysql_user:
+      name: "{{ site_db_admin_name }}"
+      host: "%"
+      password: "{{ site_db_admin_pass }}"
+      priv: "{{ site_db_name }}.*:ALL"
+      login_host: "{{ db_server_host }}"
+      login_user: "{{ db_server_admin_username }}"
+      login_password: "{{ db_server_admin_password }}"
+      check_hostname: yes
+      state: present
+
+  - name: Copy nginx site config file to host
+    ansible.builtin.copy:
+      src: "{{ playbook_dir }}/../.config/{{ site_url }}/nginx_config"
+      dest: "/etc/nginx/sites-available/{{ site_url }}"
+      mode: u=rw,g=r,o=r
+
+  - name: Download and extract wordpress
+    ansible.builtin.unarchive:
+      src: "http://wordpress.org/wordpress-latest.tar.gz"
+      dest: "~"
+      remote_src: yes
+
+  - name: Move wordpress files to website directory
+    ansible.builtin.copy:
+      src: "~/wordpress/"
+      dest: "/var/www/{{ site_url }}"
+      remote_src: yes
+      force: no
+
+  - name: Copy wordpress config file to host
+    ansible.builtin.copy:
+      src: "{{ playbook_dir }}/../.config/{{ site_url }}/wordpress_config.php"
+      dest: "/var/www/{{ site_url }}/wp-config.php"
+      mode: u=rw,g=r,o=r
+
+  - name: Change ownership of website dir to nginx
+    ansible.builtin.file:
+      path: "/var/www/{{ site_url }}"
+      state: directory
+      recurse: yes
+      owner: www-data
+      group: www-data
+
+  - name: Create symlink to nginx enabled sites
+    ansible.builtin.file:
+      src: "/etc/nginx/sites-available/{{ site_url }}"
+      dest: "/etc/nginx/sites-enabled/{{ site_url }}"
+      state: link
+
+  - name: Install certificate
+    ansible.builtin.command:
+      cmd: "certbot -i nginx -a webroot -w /var/www/{{ site_url }} -d www.{{ site_url }} -m {{ cert_notifications_email }} -n --agree-tos"
+
+  - name: Restart nginx
+    ansible.builtin.service:
+      name: nginx
+      state: restarted

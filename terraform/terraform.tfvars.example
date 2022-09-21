@@ -1,0 +1,22 @@
+project_name     = ""
+environment_type = "prod"
+
+az_tenant_id         = ""
+az_subscription_id   = ""
+az_infra_app_id      = ""
+az_infra_app_secret  = ""
+az_deployment_region = ""
+
+webhost_vm_hostname           = ""
+webhost_vm_admin_username     = ""
+webhost_vm_admin_ssh_key_path = ""
+webhost_vm_image_publisher    = "Canonical"
+webhost_vm_image_offer        = "0001-com-ubuntu-server-focal"
+webhost_vm_image_sku          = "20_04-lts-gen2"
+webhost_vm_image_version      = "latest"
+
+mysql_server_version = "8.0.21"
+
+namecheap_user_name = ""
+namecheap_api_user  = ""
+namecheap_api_key   = ""
